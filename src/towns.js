@@ -37,6 +37,32 @@ const homeworkContainer = document.querySelector('#homework-container');
  https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json
  */
 function loadTowns() {
+    return new Promise(function(resolve, reject) {
+        const xhr = new XMLHttpRequest();
+
+        xhr.open('GET', 'https://raw.githubusercontent.com/smelukov/citiesTest/master/cities.json');
+        xhr.responseType = 'json';
+        xhr.send();
+        xhr.addEventListener('load', function() {
+            if (this.status >= 400) {
+                reject();
+            } else {
+                let answer = this.response;
+
+                answer.sort( (a, b) => {
+                    if (a.name > b.name ) {
+                        return 1;
+                    }
+                    if (a.name < b.name) {
+                        return -1;
+                    }
+
+                    return 0;
+                });
+                resolve(answer);
+            }
+        });
+    })
 }
 
 /*
@@ -51,6 +77,12 @@ function loadTowns() {
    isMatching('Moscow', 'Moscov') // false
  */
 function isMatching(full, chunk) {
+    if (full.toLowerCase().indexOf(chunk.toLowerCase()) >= 0) {
+        return true;
+    } 
+    
+    return false;
+    
 }
 
 /* Блок с надписью "Загрузка" */
@@ -62,8 +94,30 @@ const filterInput = homeworkContainer.querySelector('#filter-input');
 /* Блок с результатами поиска */
 const filterResult = homeworkContainer.querySelector('#filter-result');
 
+let towns = null;
+
+loadTowns().then(result => {
+    loadingBlock.style.display = 'none';
+    filterBlock.style.display = '';
+    towns = result;
+});
+
 filterInput.addEventListener('keyup', function() {
     // это обработчик нажатия кливиш в текстовом поле
+    let chunk = filterInput.value;
+    let filterTowns = towns.filter(t => isMatching(t.name, chunk));
+
+    filterResult.textContent = '';
+
+    if (chunk) {
+        let str = '';
+
+        for (let town of filterTowns) {
+            str += town.name + '<br>';
+        }
+
+        filterResult.innerHTML = str;
+    }
 });
 
 export {
